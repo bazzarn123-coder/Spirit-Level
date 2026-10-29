@@ -1,12 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Spirit Level</title>
-    <!-- Browser Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231e293b' stroke='%2338bdf8' stroke-width='8'/><circle cx='50' cy='50' r='18' fill='%2338bdf8'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2338bdf8'/></svg>">
     <style>
         * {
             box-sizing: border-box;
@@ -25,28 +23,49 @@
             justify-content: space-between;
             height: 100vh;
             height: 100dvh;
-            padding: 20px;
+            padding: 16px;
             overflow: hidden;
         }
         header {
             text-align: center;
             width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #38bdf8;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: #94a3b8;
+        }
+        .instructions-icon-btn {
+            position: absolute;
+            right: 0;
+            top: 2px;
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .instructions-icon-btn:active {
+            background: #334155;
         }
         .main-display {
             position: relative;
-            width: 280px;
-            height: 280px;
+            width: 240px;
+            height: 240px;
             background: #1e293b;
             border-radius: 50%;
             border: 6px solid #334155;
@@ -54,68 +73,105 @@
             align-items: center;
             justify-content: center;
             box-shadow: inset 0 10px 25px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3);
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: border-color 0.2s;
+            touch-action: none;
+            cursor: grab;
+        }
+        .main-display:active {
+            cursor: grabbing;
         }
         .main-display.is-level {
             border-color: #22c55e;
-            box-shadow: inset 0 10px 25px rgba(0,0,0,0.5), 0 0 25px rgba(34, 197, 94, 0.4);
+            box-shadow: inset 0 10px 25px rgba(0,0,0,0.5), 0 0 20px rgba(34, 197, 94, 0.4);
         }
         .crosshair-h, .crosshair-v {
             position: absolute;
             background: rgba(255, 255, 255, 0.15);
+            pointer-events: none;
         }
         .crosshair-h { width: 80%; height: 2px; top: 50%; left: 10%; transform: translateY(-50%); }
         .crosshair-v { width: 2px; height: 80%; left: 50%; top: 10%; transform: translateX(-50%); }
         
         .target-ring {
             position: absolute;
-            width: 70px;
-            height: 70px;
-            border: 2px dashed rgba(255, 255, 255, 0.35);
+            width: 60px;
+            height: 60px;
+            border: 2px dashed rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            pointer-events: none;
         }
         .bubble {
             position: absolute;
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle at 35% 35%, #38bdf8, #0284c7);
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 50% 50%, #38bdf8, #0284c7);
             border-radius: 50%;
             box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.3);
             transform: translate(-50%, -50%);
-            left: 140px;
-            top: 140px;
-            will-change: left, top;
-            transition: background 0.2s;
+            will-change: transform;
+            pointer-events: none;
         }
         .is-level .bubble {
-            background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a);
+            background: radial-gradient(circle at 50% 50%, #4ade80, #16a34a);
         }
+        /* Nudge Arrow Controls */
+        .nudge-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 42px);
+            grid-template-rows: repeat(2, 38px);
+            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }
+        .nudge-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s, transform 0.1s;
+        }
+        .nudge-btn:active {
+            background: #38bdf8;
+            color: #0f172a;
+            transform: scale(0.95);
+        }
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+
         .readouts {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
-            max-width: 340px;
+            max-width: 320px;
         }
         .card {
             background: #1e293b;
-            padding: 12px;
-            border-radius: 14px;
+            padding: 10px;
+            border-radius: 12px;
             text-align: center;
             border: 1px solid #334155;
         }
         .card-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #94a3b8;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .card-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: #f8fafc;
         }
@@ -123,15 +179,15 @@
             display: flex;
             gap: 10px;
             width: 100%;
-            max-width: 340px;
+            max-width: 320px;
         }
         .btn {
             flex: 1;
             background: #38bdf8;
             color: #0f172a;
             border: none;
-            padding: 14px;
-            font-size: 15px;
+            padding: 12px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 12px;
             cursor: pointer;
@@ -152,8 +208,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.96);
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(6px);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -166,48 +222,37 @@
             display: none;
         }
         .permission-overlay h2 {
-            font-size: 26px;
-            margin-bottom: 16px;
+            font-size: 24px;
+            margin-bottom: 12px;
             color: #38bdf8;
         }
-        .instructions-list {
-            text-align: left;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 24px;
-            width: 100%;
-            max-width: 340px;
-        }
-        .instructions-list li {
-            font-size: 14px;
+        .permission-overlay p {
+            font-size: 15px;
             color: #cbd5e1;
-            margin-bottom: 10px;
-            line-height: 1.4;
-            list-style-type: disc;
-            margin-left: 18px;
-        }
-        .instructions-list li:last-child {
-            margin-bottom: 0;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            text-align: left;
+            max-width: 320px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Start / Instruction Screen -->
+    <!-- Start & Instructions Splash Screen -->
     <div id="permissionOverlay" class="permission-overlay">
         <h2>Spirit Level</h2>
-        <ul class="instructions-list">
-            <li>Put your phone on a perfectly flat surface and press <strong>Calibrate</strong>.</li>
-            <li>The phone will remain calibrated until Calibrate is pressed again.</li>
-        </ul>
+        <p>
+            1. Put your phone on a <strong>perfectly flat surface</strong>.<br>
+            2. Press <strong>Calibrate</strong>.<br><br>
+            The phone stays calibrated until Calibrate is pressed again. Use touch & slide or the <strong>arrow buttons</strong> ($\uparrow, \downarrow, \leftarrow, \rightarrow$) to fine-tune the center, then press <strong>Lock Calibration</strong> to save it.
+        </p>
         <button class="btn" id="permissionBtn">Start Level</button>
     </div>
 
     <header>
         <h1>Spirit Level</h1>
         <div class="subtitle" id="statusText">Sensor Active</div>
+        <button class="instructions-icon-btn" id="instructionsBtn">Instructions</button>
     </header>
 
     <div class="main-display" id="mainDisplay">
@@ -215,6 +260,14 @@
         <div class="crosshair-v"></div>
         <div class="target-ring"></div>
         <div class="bubble" id="bubble"></div>
+    </div>
+
+    <!-- Fine-tune Arrow Nudge Panel -->
+    <div class="nudge-panel">
+        <button class="nudge-btn btn-up" id="nudgeUp">▲</button>
+        <button class="nudge-btn btn-left" id="nudgeLeft">◀</button>
+        <button class="nudge-btn btn-down" id="nudgeDown">▼</button>
+        <button class="nudge-btn btn-right" id="nudgeRight">▶</button>
     </div>
 
     <div class="readouts">
@@ -229,35 +282,38 @@
     </div>
 
     <div class="controls">
-        <button class="btn btn-secondary" id="holdBtn">Hold / Lock</button>
+        <button class="btn btn-secondary" id="lockBtn">Lock Calibration</button>
         <button class="btn" id="calBtn">Calibrate</button>
     </div>
 
 <script>
 const permissionOverlay = document.getElementById('permissionOverlay');
 const permissionBtn = document.getElementById('permissionBtn');
+const instructionsBtn = document.getElementById('instructionsBtn');
 const mainDisplay = document.getElementById('mainDisplay');
 const bubble = document.getElementById('bubble');
 const pitchVal = document.getElementById('pitchVal');
 const rollVal = document.getElementById('rollVal');
 const statusText = document.getElementById('statusText');
 const calBtn = document.getElementById('calBtn');
-const holdBtn = document.getElementById('holdBtn');
+const lockBtn = document.getElementById('lockBtn');
 
-let beta = 0;   // Front/back tilt
-let gamma = 0;  // Left/right tilt
-
-let rawBeta = 0;
-let rawGamma = 0;
+const nudgeUp = document.getElementById('nudgeUp');
+const nudgeDown = document.getElementById('nudgeDown');
+const nudgeLeft = document.getElementById('nudgeLeft');
+const nudgeRight = document.getElementById('nudgeRight');
 
 let calBeta = 0;
 let calGamma = 0;
+let lastRawBeta = 0;
+let lastRawGamma = 0;
 
-let isHeld = false;
+let currentX = 120;
+let currentY = 120;
+let isDragging = false;
 let isLevelState = false;
-let isSimulating = false;
+let sensorsInitialized = false;
 
-// Web Audio sound feedback
 let audioCtx = null;
 function playLevelSound() {
     if (!audioCtx) return;
@@ -266,7 +322,7 @@ function playLevelSound() {
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
         osc.start();
@@ -280,37 +336,33 @@ function initAudio() {
     }
 }
 
-// Handle device orientation events safely
-function handleOrientation(e) {
-    if (isHeld || isSimulating) return;
+function handleOrientation(event) {
+    if (isDragging) return;
 
-    rawBeta = (e.beta !== null && e.beta !== undefined) ? e.beta : 0;
-    rawGamma = (e.gamma !== null && e.gamma !== undefined) ? e.gamma : 0;
+    lastRawBeta = event.beta ?? 0;
+    lastRawGamma = event.gamma ?? 0;
 
-    // Apply calibration offsets
-    beta = rawBeta - calBeta;
-    gamma = rawGamma - calGamma;
+    let beta = lastRawBeta - calBeta;
+    let gamma = lastRawGamma - calGamma;
 
-    updateDisplay();
-}
-
-function updateDisplay() {
     let clampedPitch = Math.max(-45, Math.min(45, beta));
     let clampedRoll = Math.max(-45, Math.min(45, gamma));
 
-    pitchVal.textContent = clampedPitch.toFixed(1) + '°';
-    rollVal.textContent = clampedRoll.toFixed(1) + '°';
+    let maxTravel = 90;
+    currentX = 120 + (clampedRoll / 30) * maxTravel;
+    currentY = 120 + (clampedPitch / 30) * maxTravel;
 
-    // Map angle to pixel offset inside the 280px circle (radius ~ 100px max travel)
-    let maxTravel = 100;
-    let xPos = 140 + (clampedRoll / 30) * maxTravel;
-    let yPos = 140 + (clampedPitch / 30) * maxTravel;
+    updateDisplayValues(clampedPitch, clampedRoll);
+}
 
-    bubble.style.left = `${xPos}px`;
-    bubble.style.top = `${yPos}px`;
+function updateDisplayValues(pitch, roll) {
+    pitchVal.textContent = pitch.toFixed(1) + '°';
+    rollVal.textContent = roll.toFixed(1) + '°';
 
-    // Check if level (within 0.6 degrees threshold)
-    let distance = Math.sqrt(clampedPitch * clampedPitch + clampedRoll * clampedRoll);
+    bubble.style.left = `${currentX}px`;
+    bubble.style.top = `${currentY}px`;
+
+    let distance = Math.sqrt(pitch * pitch + roll * roll);
     if (distance <= 0.6) {
         if (!isLevelState) {
             isLevelState = true;
@@ -329,128 +381,130 @@ function updateDisplay() {
     }
 }
 
-// Calibration button: snaps bubble dead center precisely at (140px, 140px)
+// Calibrate: resets offsets and dead-centers the ball
 calBtn.addEventListener('click', () => {
     initAudio();
-    calBeta = rawBeta;
-    calGamma = rawGamma;
+    calBeta = lastRawBeta;
+    calGamma = lastRawGamma;
+    currentX = 120;
+    currentY = 120;
     
-    beta = 0;
-    gamma = 0;
+    statusText.textContent = 'Sensor Active';
+    statusText.style.color = '#94a3b8';
     
-    // Force explicit dead center positioning
-    bubble.style.left = '140px';
-    bubble.style.top = '140px';
-    
-    pitchVal.textContent = '0.0°';
-    rollVal.textContent = '0.0°';
+    updateDisplayValues(0, 0);
     
     calBtn.textContent = 'Calibrated!';
     setTimeout(() => { calBtn.textContent = 'Calibrate'; }, 1000);
 });
 
-// Hold / Lock button
-holdBtn.addEventListener('click', () => {
-    isHeld = !isHeld;
-    if (isHeld) {
-        holdBtn.textContent = 'Resume';
-        holdBtn.style.background = '#38bdf8';
-        holdBtn.style.color = '#0f172a';
-        statusText.textContent = 'Measurement Locked';
-    } else {
-        holdBtn.textContent = 'Hold / Lock';
-        holdBtn.style.background = '#334155';
-        holdBtn.style.color = '#f8fafc';
-        statusText.textContent = 'Sensor Active';
-    }
+// Lock Calibration button: saves custom zero-point offset based on current screen position
+lockBtn.addEventListener('click', () => {
+    initAudio();
+    
+    let targetedPitch = ((currentY - 120) / 90) * 30;
+    let targetedRoll = ((currentX - 120) / 90) * 30;
+
+    calBeta = lastRawBeta - targetedPitch;
+    calGamma = lastRawGamma - targetedRoll;
+
+    statusText.textContent = 'Calibration Locked & Active';
+    statusText.style.color = '#38bdf8';
+    
+    lockBtn.textContent = 'Calibration Saved!';
+    setTimeout(() => { lockBtn.textContent = 'Lock Calibration'; }, 1000);
 });
 
-// Permission & sensor initialization workflow
+// Arrow Nudge Controls
+function nudgePosition(dx, dy) {
+    initAudio();
+    currentX = Math.max(30, Math.min(210, currentX + dx));
+    currentY = Math.max(30, Math.min(210, currentY + dy));
+
+    let simulatedPitch = ((currentY - 120) / 90) * 30;
+    let simulatedRoll = ((currentX - 120) / 90) * 30;
+    updateDisplayValues(simulatedPitch, simulatedRoll);
+}
+
+nudgeUp.addEventListener('click', () => nudgePosition(0, -2));
+nudgeDown.addEventListener('click', () => nudgePosition(0, 2));
+nudgeLeft.addEventListener('click', () => nudgePosition(-2, 0));
+nudgeRight.addEventListener('click', () => nudgePosition(2, 0));
+
+// Touch and slide interaction to position the ball where desired
+mainDisplay.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    mainDisplay.setPointerCapture(e.pointerId);
+    updateDragPosition(e);
+});
+
+mainDisplay.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    updateDragPosition(e);
+});
+
+mainDisplay.addEventListener('pointerup', (e) => {
+    isDragging = false;
+    try { mainDisplay.releasePointerCapture(e.pointerId); } catch(err) {}
+});
+
+function updateDragPosition(e) {
+    const rect = mainDisplay.getBoundingClientRect();
+    let cx = e.clientX - rect.left;
+    let cy = e.clientY - rect.top;
+    let dx = cx - 120;
+    let dy = cy - 120;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > 90) {
+        cx = 120 + (dx / dist) * 90;
+        cy = 120 + (dy / dist) * 90;
+    }
+    
+    currentX = cx;
+    currentY = cy;
+    
+    let simulatedPitch = ((currentY - 120) / 90) * 30;
+    let simulatedRoll = ((currentX - 120) / 90) * 30;
+    
+    updateDisplayValues(simulatedPitch, simulatedRoll);
+}
+
+// Instructions Button Handler
+instructionsBtn.addEventListener('click', () => {
+    permissionOverlay.classList.remove('hidden');
+    permissionBtn.textContent = 'Resume Level';
+});
+
 async function requestSensors() {
     initAudio();
+    if (sensorsInitialized) {
+        permissionOverlay.classList.add('hidden');
+        return;
+    }
+
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         try {
             const permissionState = await DeviceOrientationEvent.requestPermission();
             if (permissionState === 'granted') {
                 window.addEventListener('deviceorientation', handleOrientation);
+                sensorsInitialized = true;
                 permissionOverlay.classList.add('hidden');
             } else {
-                statusText.textContent = 'Permission denied. Using simulation.';
-                initSimulation();
-                permissionOverlay.classList.add('hidden');
+                alert('Permission denied for motion sensors.');
             }
         } catch (error) {
             console.error(error);
-            initSimulation();
-            permissionOverlay.classList.add('hidden');
         }
     } else if (typeof window.DeviceOrientationEvent !== 'undefined') {
         window.addEventListener('deviceorientation', handleOrientation);
+        sensorsInitialized = true;
         permissionOverlay.classList.add('hidden');
     } else {
-        initSimulation();
+        sensorsInitialized = true;
         permissionOverlay.classList.add('hidden');
+        statusText.textContent = 'Desktop Mode (Use touch or arrows)';
     }
-}
-
-function initSimulation() {
-    isSimulating = true;
-    statusText.textContent = 'Simulation Mode (Drag to tilt)';
-    
-    let isDragging = false;
-    mainDisplay.addEventListener('pointerdown', () => isDragging = true);
-    window.addEventListener('pointerup', () => isDragging = false);
-    window.addEventListener('pointermove', (e) => {
-        if (!isDragging || isHeld) return;
-        const rect = mainDisplay.getBoundingClientRect();
-        let cx = e.clientX - rect.left;
-        let cy = e.clientY - rect.top;
-        let dx = cx - 140;
-        let dy = cy - 140;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > 100) {
-            cx = 140 + (dx / dist) * 100;
-            cy = 140 + (dy / dist) * 100;
-        }
-        bubble.style.left = `${cx}px`;
-        bubble.style.top = `${cy}px`;
-        
-        beta = ((cy - 140) / 100) * 30;
-        gamma = ((cx - 140) / 100) * 30;
-        
-        pitchVal.textContent = beta.toFixed(1) + '°';
-        rollVal.textContent = gamma.toFixed(1) + '°';
-        
-        let distance = Math.sqrt(beta * beta + gamma * gamma);
-        if (distance <= 0.6) {
-            if (!isLevelState) {
-                isLevelState = true;
-                mainDisplay.classList.add('is-level');
-                playLevelSound();
-                statusText.textContent = 'PERFECTLY LEVEL!';
-                statusText.style.color = '#4ade80';
-            }
-        } else {
-            if (isLevelState) {
-                isLevelState = false;
-                mainDisplay.classList.remove('is-level');
-                statusText.textContent = 'Simulation Mode (Drag to tilt)';
-                statusText.style.color = '#94a3b8';
-            }
-        }
-    });
-
-    calBtn.onclick = () => {
-        initAudio();
-        beta = 0;
-        gamma = 0;
-        bubble.style.left = '140px';
-        bubble.style.top = '140px';
-        pitchVal.textContent = '0.0°';
-        rollVal.textContent = '0.0°';
-        calBtn.textContent = 'Calibrated!';
-        setTimeout(() => { calBtn.textContent = 'Calibrate'; }, 1000);
-    };
 }
 
 permissionBtn.addEventListener('click', requestSensors);
@@ -458,3 +512,4 @@ permissionBtn.addEventListener('click', requestSensors);
 
 </body>
 </html>
+by Bazzarn
