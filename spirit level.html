@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pocket Level - Smart Spirit Level</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            height: 100dvh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        header {
+            text-align: center;
+            width: 100%;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .main-display {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            background: #1e293b;
+            border-radius: 50%;
+            border: 6px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 10px 25px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3);
+            transition: border-color 0.2s;
+        }
+        .main-display.is-level {
+            border-color: #22c55e;
+            box-shadow: inset 0 10px 25px rgba(0,0,0,0.5), 0 0 20px rgba(34, 197, 94, 0.4);
+        }
+        .crosshair-h, .crosshair-v {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .crosshair-h { width: 80%; height: 2px; top: 50%; left: 10%; transform: translateY(-50%); }
+        .crosshair-v { width: 2px; height: 80%; left: 50%; top: 10%; transform: translateX(-50%); }
+        
+        .target-ring {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border: 2px dashed rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .bubble {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 35% 35%, #38bdf8, #0284c7);
+            border-radius: 50%;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%);
+            will-change: transform;
+            transition: background 0.2s;
+        }
+        .is-level .bubble {
+            background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a);
+        }
+        .readouts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .card {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 14px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .card-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .btn {
+            flex: 1;
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+            transition: transform 0.1s, background 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn-secondary {
+            background: #334155;
+            color: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+            z-index: 100;
+        }
+        .permission-overlay.hidden {
+            display: none;
+        }
+        .permission-overlay h2 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: #38bdf8;
+        }
+        .permission-overlay p {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sensor Permission Screen (Required for iOS & modern mobile browsers) -->
+    <div id="permissionOverlay" class="permission-overlay">
+        <h2>Pocket Level</h2>
+        <p>This tool uses your phone's motion sensors to measure flat surfaces and angles accurately. Please tap below to enable access.</p>
+        <button class="btn" id="permissionBtn">Start Level</button>
+    </div>
+
+    <header>
+        <h1>Pocket Level</h1>
+        <div class="subtitle" id="statusText">Sensor Active</div>
+    </header>
+
+    <div class="main-display" id="mainDisplay">
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+        <div class="target-ring"></div>
+        <div class="bubble" id="bubble"></div>
+    </div>
+
+    <div class="readouts">
+        <div class="card">
+            <div class="card-label">Pitch (X)</div>
+            <div class="card-value" id="pitchVal">0.0°</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Roll (Y)</div>
+            <div class="card-value" id="rollVal">0.0°</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-secondary" id="holdBtn">Hold / Lock</button>
+        <button class="btn" id="calBtn">Calibrate</button>
+    </div>
+
+<script>
+const permissionOverlay = document.getElementById('permissionOverlay');
+const permissionBtn = document.getElementById('permissionBtn');
+const mainDisplay = document.getElementById('mainDisplay');
+const bubble = document.getElementById('bubble');
+const pitchVal = document.getElementById('pitchVal');
+const rollVal = document.getElementById('rollVal');
+const statusText = document.getElementById('statusText');
+const calBtn = document.getElementById('calBtn');
+const holdBtn = document.getElementById('holdBtn');
+
+let beta = 0;   // Front/back tilt (-90 to 90)
+let gamma = 0;  // Left/right tilt (-90 to 90)
+
+let calBeta = 0;
+let calGamma = 0;
+let isHeld = false;
+let isLevelState = false;
+
+// Web Audio sound feedback
+let audioCtx = null;
+function playLevelSound() {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    } catch(e) {}
+}
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+// Handle device orientation events
+function handleOrientation(event) {
+    if (isHeld) return;
+
+    // raw values
+    let rawBeta = event.beta || 0;   // [-180, 180]
+    let rawGamma = event.gamma || 0; // [-90, 90]
+
+    // Apply calibration offsets
+    beta = rawBeta - calBeta;
+    gamma = rawGamma - calGamma;
+
+    updateDisplay();
+}
+
+function updateDisplay() {
+    // Clamping values for display and movement
+    let clampedPitch = Math.max(-45, Math.min(45, beta));
+    let clampedRoll = Math.max(-45, Math.min(45, gamma));
+
+    pitchVal.textContent = clampedPitch.toFixed(1) + '°';
+    rollVal.textContent = clampedRoll.toFixed(1) + '°';
+
+    // Map angle to pixel offset inside the 280px circle (radius ~ 110px max travel)
+    let maxTravel = 100;
+    let xPos = 140 + (clampedRoll / 30) * maxTravel;
+    let yPos = 140 + (clampedPitch / 30) * maxTravel;
+
+    bubble.style.left = `${xPos}px`;
+    bubble.style.top = `${yPos}px`;
+
+    // Check if level (within 0.6 degrees threshold)
+    let distance = Math.sqrt(clampedPitch * clampedPitch + clampedRoll * clampedRoll);
+    if (distance <= 0.6) {
+        if (!isLevelState) {
+            isLevelState = true;
+            mainDisplay.classList.add('is-level');
+            playLevelSound();
+            statusText.textContent = 'PERFECTLY LEVEL!';
+            statusText.style.color = '#4ade80';
+        }
+    } else {
+        if (isLevelState) {
+            isLevelState = false;
+            mainDisplay.classList.remove('is-level');
+            statusText.textContent = 'Sensor Active';
+            statusText.style.color = '#94a3b8';
+        }
+    }
+}
+
+// Calibration button
+calBtn.addEventListener('click', () => {
+    initAudio();
+    calBeta = eventBeta || beta + calBeta;
+    calGamma = eventGamma || gamma + calGamma;
+    
+    // Quick feedback animation on button
+    calBtn.textContent = 'Calibrated!';
+    setTimeout(() => { calBtn.textContent = 'Calibrate'; }, 1000);
+});
+
+// Hold / Lock button
+holdBtn.addEventListener('click', () => {
+    isHeld = !isHeld;
+    if (isHeld) {
+        holdBtn.textContent = 'Resume';
+        holdBtn.style.background = '#38bdf8';
+        holdBtn.style.color = '#0f172a';
+        statusText.textContent = 'Measurement Locked';
+    } else {
+        holdBtn.textContent = 'Hold / Lock';
+        holdBtn.style.background = '#334155';
+        holdBtn.style.color = '#f8fafc';
+        statusText.textContent = 'Sensor Active';
+    }
+});
+
+let eventBeta = 0;
+let eventGamma = 0;
+
+// Permission request workflow for mobile devices
+async function requestSensors() {
+    initAudio();
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const permissionState = await DeviceOrientationEvent.requestPermission();
+            if (permissionState === 'granted') {
+                window.addEventListener('deviceorientation', (e) => {
+                    eventBeta = e.beta;
+                    eventGamma = e.gamma;
+                    handleOrientation(e);
+                });
+                permissionOverlay.classList.add('hidden');
+            } else {
+                alert('Permission denied for motion sensors.');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    } else if (typeof window.DeviceOrientationEvent !== 'undefined') {
+        window.addEventListener('deviceorientation', (e) => {
+            eventBeta = e.beta;
+            eventGamma = e.gamma;
+            handleOrientation(e);
+        });
+        permissionOverlay.classList.add('hidden');
+    } else {
+        // Fallback simulation for desktop browsers without gyroscope
+        permissionOverlay.classList.add('hidden');
+        statusText.textContent = 'Desktop Simulation Mode (Drag to tilt)';
+        
+        let simX = 140, simY = 140;
+        let isDragging = false;
+        mainDisplay.addEventListener('pointerdown', () => isDragging = true);
+        window.addEventListener('pointerup', () => isDragging = false);
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const rect = mainDisplay.getBoundingClientRect();
+            let cx = e.clientX - rect.left;
+            let cy = e.clientY - rect.top;
+            let dx = cx - 140;
+            let dy = cy - 140;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 100) {
+                cx = 140 + (dx / dist) * 100;
+                cy = 140 + (dy / dist) * 100;
+            }
+            bubble.style.left = `${cx}px`;
+            bubble.style.top = `${cy}px`;
+            
+            beta = ((cy - 140) / 100) * 30;
+            gamma = ((cx - 140) / 100) * 30;
+            pitchVal.textContent = beta.toFixed(1) + '°';
+            rollVal.textContent = gamma.toFixed(1) + '°';
+        });
+    }
+}
+
+permissionBtn.addEventListener('click', requestSensors);
+</script>
+
+</body>
+</html>
