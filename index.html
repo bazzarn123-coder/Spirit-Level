@@ -62,7 +62,7 @@
         }
         .crosshair-h, .crosshair-v {
             position: absolute;
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.15);
         }
         .crosshair-h { width: 80%; height: 2px; top: 50%; left: 10%; transform: translateY(-50%); }
         .crosshair-v { width: 2px; height: 80%; left: 50%; top: 10%; transform: translateX(-50%); }
@@ -71,7 +71,7 @@
             position: absolute;
             width: 70px;
             height: 70px;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border: 2px dashed rgba(255, 255, 255, 0.35);
             border-radius: 50%;
             top: 50%;
             left: 50%;
@@ -85,7 +85,9 @@
             border-radius: 50%;
             box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.3);
             transform: translate(-50%, -50%);
-            will-change: transform;
+            left: 140px;
+            top: 140px;
+            will-change: left, top;
             transition: background 0.2s;
         }
         .is-level .bubble {
@@ -198,7 +200,7 @@
         <h2>Spirit Level</h2>
         <ul class="instructions-list">
             <li>Put your phone on a perfectly flat surface and press <strong>Calibrate</strong>.</li>
-            <li>The phone will then remain calibrated to this baseline until Calibrate is pressed again.</li>
+            <li>The phone will remain calibrated until Calibrate is pressed again.</li>
         </ul>
         <button class="btn" id="permissionBtn">Start Level</button>
     </div>
@@ -278,7 +280,7 @@ function initAudio() {
     }
 }
 
-// Handle device orientation events safely with explicit null/undefined checks
+// Handle device orientation events safely
 function handleOrientation(e) {
     if (isHeld || isSimulating) return;
 
@@ -327,7 +329,7 @@ function updateDisplay() {
     }
 }
 
-// Calibration button: accurately captures current raw sensor values and hard-zeroes offsets to dead-center
+// Calibration button: snaps bubble dead center precisely at (140px, 140px)
 calBtn.addEventListener('click', () => {
     initAudio();
     calBeta = rawBeta;
@@ -335,7 +337,13 @@ calBtn.addEventListener('click', () => {
     
     beta = 0;
     gamma = 0;
-    updateDisplay();
+    
+    // Force explicit dead center positioning
+    bubble.style.left = '140px';
+    bubble.style.top = '140px';
+    
+    pitchVal.textContent = '0.0°';
+    rollVal.textContent = '0.0°';
     
     calBtn.textContent = 'Calibrated!';
     setTimeout(() => { calBtn.textContent = 'Calibrate'; }, 1000);
@@ -432,14 +440,14 @@ function initSimulation() {
         }
     });
 
-    // Calibration in simulation mode resets bubble dead center
     calBtn.onclick = () => {
         initAudio();
         beta = 0;
         gamma = 0;
-        bubble.style.left = `140px`;
-        bubble.style.top = `140px`;
-        updateDisplay();
+        bubble.style.left = '140px';
+        bubble.style.top = '140px';
+        pitchVal.textContent = '0.0°';
+        rollVal.textContent = '0.0°';
         calBtn.textContent = 'Calibrated!';
         setTimeout(() => { calBtn.textContent = 'Calibrate'; }, 1000);
     };
